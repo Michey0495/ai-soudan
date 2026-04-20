@@ -10,6 +10,8 @@ type ConsultationType = 'online' | 'offline'
 
 export function BookingForm({ selectedDate, selectedTime }: BookingFormProps) {
   const [submitted, setSubmitted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [consultationType, setConsultationType] = useState<ConsultationType>('online')
   const [formData, setFormData] = useState({
     companyName: '',
@@ -20,13 +22,40 @@ export function BookingForm({ selectedDate, selectedTime }: BookingFormProps) {
     message: '',
   })
 
-  const isReady = selectedDate && selectedTime && formData.companyName && formData.name && formData.email
+  const isReady = selectedDate && selectedTime && formData.companyName && formData.name && formData.email && !submitting
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!isReady) return
-    // 実際にはここでAPIリクエスト
-    setSubmitted(true)
+    if (!isReady || !selectedDate) return
+
+    setSubmitting(true)
+    setError(null)
+
+    const dateStr = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`
+
+    try {
+      const response = await fetch('/api/booking', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date: dateStr,
+          time: selectedTime,
+          consultationType,
+          ...formData,
+        }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || '送信に失敗しました')
+      }
+
+      setSubmitted(true)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '送信に失敗しました。時間をおいて再度お試しください。')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const updateField = (field: string, value: string) => {
@@ -165,6 +194,12 @@ export function BookingForm({ selectedDate, selectedTime }: BookingFormProps) {
         />
       </div>
 
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
       <button
         type="submit"
         disabled={!isReady}
@@ -177,7 +212,7 @@ export function BookingForm({ selectedDate, selectedTime }: BookingFormProps) {
         `}
       >
         <Send size={16} />
-        無料相談を予約する
+        {submitting ? '送信中...' : '無料相談を予約する'}
       </button>
 
       <p className="text-xs text-warm-400 text-center">

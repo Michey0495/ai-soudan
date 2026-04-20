@@ -53,8 +53,8 @@ export function Footer() {
             &copy; 2026 AIの相談所. All rights reserved.
           </p>
           <div className="flex gap-6 text-xs text-warm-500">
-            <a href="#" className="hover:text-warm-300 no-underline">プライバシーポリシー</a>
-            <a href="#" className="hover:text-warm-300 no-underline">利用規約</a>
+            <Link to="/privacy" className="hover:text-warm-300 no-underline">プライバシーポリシー</Link>
+            <Link to="/terms" className="hover:text-warm-300 no-underline">利用規約</Link>
           </div>
         </div>
       </div>
